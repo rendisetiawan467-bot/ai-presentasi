@@ -1,9 +1,9 @@
-# ai-presentasi<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Presentation Generator Pro</title>
+    <title>AI Presentation Generator Pro - PPT Support</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,8 +21,11 @@
     <!-- Mammoth.js untuk parsing DOCX -->
     <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
     
-    <!-- Turndown.js untuk HTML ke Markdown -->
-    <script src="https://unpkg.com/turndown/dist/turndown.js"></script>
+    <!-- PptxGenJS untuk Generate PPT -->
+    <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+    
+    <!-- JSZip untuk ekstrak PPTX (upload) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -148,6 +151,11 @@
         
         .font-bold { font-weight: 700; }
         .font-italic { font-style: italic; }
+
+        /* PPT Specific Styles */
+        .ppt-icon {
+            background: linear-gradient(135deg, #d946ef 0%, #8b5cf6 100%);
+        }
     </style>
 </head>
 <body class="text-white h-screen flex flex-col">
@@ -160,11 +168,11 @@
             </div>
             <div>
                 <h1 class="font-bold text-xl tracking-tight">AI Presentation Generator</h1>
-                <p class="text-xs text-gray-400">Pro Version with Document Parser</p>
+                <p class="text-xs text-gray-400">Pro Version dengan PPT Support</p>
             </div>
         </div>
 
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
             <!-- Input Topik -->
             <div class="relative group">
                 <input type="text" id="topicInput" placeholder="Masukkan topik presentasi..." 
@@ -177,11 +185,19 @@
 
             <div class="h-6 w-px bg-white/10"></div>
 
-            <!-- Upload & URL -->
+            <!-- Import Button -->
             <button onclick="toggleImportModal()" class="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-sm transition-colors border border-white/10">
                 <i class="fas fa-file-import"></i>
                 <span>Import</span>
             </button>
+
+            <!-- Download PPT Button -->
+            <button onclick="exportPPT()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-700 hover:to-purple-700 rounded-lg text-sm font-medium transition-all shadow-lg shadow-purple-500/30">
+                <i class="fas fa-file-powerpoint"></i>
+                <span>Download PPT</span>
+            </button>
+
+            <div class="h-6 w-px bg-white/10"></div>
 
             <button onclick="togglePresentationMode()" class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-sm font-medium transition-colors shadow-lg shadow-indigo-500/30">
                 <i class="fas fa-play"></i>
@@ -190,7 +206,7 @@
 
             <button onclick="exportHTML()" class="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-sm font-medium transition-colors">
                 <i class="fas fa-download"></i>
-                <span>Export</span>
+                <span>Export HTML</span>
             </button>
         </div>
     </header>
@@ -371,11 +387,11 @@
                     </h3>
                     
                     <div id="dropZone" class="drop-zone rounded-xl p-8 text-center cursor-pointer" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" onclick="document.getElementById('fileInput').click()">
-                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.txt" onchange="handleFileSelect(event)">
+                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.docx,.txt,.pptx,.ppt" onchange="handleFileSelect(event)">
                         <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-3"></i>
                         <p class="text-sm text-gray-300 mb-1">Drag & drop file di sini</p>
                         <p class="text-xs text-gray-500">atau klik untuk browse</p>
-                        <p class="text-xs text-gray-600 mt-2">Mendukung PDF, DOCX, TXT</p>
+                        <p class="text-xs text-gray-600 mt-2">PDF, DOCX, TXT, PPTX</p>
                     </div>
 
                     <div id="uploadProgress" class="hidden">
@@ -466,7 +482,6 @@
         
         // Inisialisasi
         document.addEventListener('DOMContentLoaded', () => {
-            // Generate 5 slide default
             generateDefaultSlides();
             renderThumbnails();
             loadSlide(0);
@@ -499,7 +514,7 @@
                     animation: 'fade',
                     title: 'Selamat Datang',
                     subtitle: 'AI Presentation Generator Pro',
-                    content: 'Buat presentasi menakjubkan dengan AI',
+                    content: 'Buat presentasi menakjubkan dengan AI dan export ke PPT',
                     shapes: [],
                     notes: ''
                 },
@@ -509,9 +524,9 @@
                     theme: 'gradient',
                     accent: 'indigo',
                     animation: 'slideUp',
-                    title: 'Pendahuluan',
+                    title: 'Fitur Unggulan',
                     subtitle: '',
-                    content: '• Fitur lengkap dengan AI\n• Upload dokumen PDF, DOCX, TXT\n• Scraping URL otomatis\n• Drag & drop shapes',
+                    content: '• Upload & Download file PPT asli\n• Parsing PDF, DOCX, TXT\n• Scraping URL otomatis\n• Drag & drop shapes\n• Multiple themes & layouts',
                     shapes: [],
                     notes: ''
                 },
@@ -521,9 +536,9 @@
                     theme: 'gradient',
                     accent: 'indigo',
                     animation: 'scale',
-                    title: 'Poin Utama',
-                    subtitle: 'Teknologi Modern',
-                    content: 'Left: Visualisasi data real-time\nRight: Integrasi AI canggih',
+                    title: 'Teknologi Modern',
+                    subtitle: 'Powered by PptxGenJS',
+                    content: 'Generate file PowerPoint yang valid dan dapat diedit di Microsoft Office, Google Slides, atau LibreOffice Impress.',
                     shapes: [],
                     notes: ''
                 },
@@ -533,9 +548,9 @@
                     theme: 'gradient',
                     accent: 'indigo',
                     animation: 'rotate',
-                    title: 'Studi Kasus',
-                    subtitle: 'Implementasi',
-                    content: 'Contoh penggunaan dalam industri',
+                    title: 'Integrasi Sempurna',
+                    subtitle: 'Workflow yang efisien',
+                    content: 'Dari ide hingga presentasi profesional dalam hitungan menit.',
                     shapes: [],
                     notes: ''
                 },
@@ -545,9 +560,9 @@
                     theme: 'gradient',
                     accent: 'indigo',
                     animation: 'fade',
-                    title: 'Kesimpulan',
+                    title: 'Mulai Sekarang',
                     subtitle: '',
-                    content: '• Efisiensi waktu\n• Kualitas profesional\n• Mudah digunakan',
+                    content: '• Klik "Download PPT" untuk menyimpan\n• File siap presentasi\n• Format standar industri',
                     shapes: [],
                     notes: ''
                 }
@@ -589,7 +604,6 @@
             currentSlideIndex = index;
             const slide = slides[index];
             
-            // Update form properties
             document.getElementById('propTitle').value = slide.title;
             document.getElementById('propSubtitle').value = slide.subtitle;
             document.getElementById('propContent').value = slide.content;
@@ -684,13 +698,11 @@
             
             container.innerHTML = contentHTML;
             
-            // Apply GSAP animation
             gsap.fromTo(container.children, 
                 { opacity: 0, y: 20, scale: 0.95 },
                 { opacity: 1, y: 0, scale: 1, duration: 0.5, stagger: 0.1, ease: "power2.out" }
             );
             
-            // Init draggable shapes
             initDraggableShapes();
         }
 
@@ -729,7 +741,6 @@
                 if (field === 'subtitle') slides[currentSlideIndex].subtitle = element.textContent;
                 if (field === 'content') slides[currentSlideIndex].content = element.textContent;
                 
-                // Update properties panel
                 if (field === 'title') document.getElementById('propTitle').value = element.textContent;
                 if (field === 'subtitle') document.getElementById('propSubtitle').value = element.textContent;
                 if (field === 'content') document.getElementById('propContent').value = element.textContent;
@@ -867,7 +878,6 @@
             const topic = document.getElementById('topicInput').value;
             if (!topic) return;
             
-            // Simulasi AI Generation
             const titles = [
                 `Pengenalan ${topic}`,
                 `Manfaat ${topic}`,
@@ -892,13 +902,11 @@
             renderThumbnails();
             loadSlide(0);
             
-            // Animasi notifikasi
             gsap.fromTo("#currentSlide", {scale: 0.9}, {scale: 1, duration: 0.5, ease: "back.out(1.7)"});
         }
 
         function applyAIToCurrentSlide() {
             const slide = slides[currentSlideIndex];
-            // Simulasi enhance
             slide.content = slide.content + '\n\n• [AI Enhanced] Data pendukung\n• [AI Enhanced] Insight tambahan';
             renderCurrentSlide();
             document.getElementById('propContent').value = slide.content;
@@ -954,6 +962,9 @@
                 } else if (extension === 'txt') {
                     status.textContent = 'Memproses TXT...';
                     await parseTXT(file);
+                } else if (extension === 'pptx' || extension === 'ppt') {
+                    status.textContent = 'Memproses PowerPoint...';
+                    await parsePPTX(file);
                 } else {
                     alert('Format file tidak didukung');
                     progress.classList.add('hidden');
@@ -975,7 +986,7 @@
             const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
             
             let fullText = '';
-            const maxPages = Math.min(pdf.numPages, 5); // Ambil max 5 halaman
+            const maxPages = Math.min(pdf.numPages, 5);
             
             for (let i = 1; i <= maxPages; i++) {
                 const page = await pdf.getPage(i);
@@ -1000,6 +1011,82 @@
             parsedDocumentContent = text;
         }
 
+        // PPTX Parser menggunakan JSZip
+        async function parsePPTX(file) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const zip = await JSZip.loadAsync(arrayBuffer);
+                
+                // Extract slide content dari ppt/slides/slide*.xml
+                const slideFiles = [];
+                zip.folder('ppt/slides').forEach((relativePath, file) => {
+                    if (relativePath.match(/slide\d+\.xml$/)) {
+                        slideFiles.push(file);
+                    }
+                });
+                
+                // Sort slides by number
+                slideFiles.sort((a, b) => {
+                    const numA = parseInt(a.name.match(/slide(\d+)\.xml$/)[1]);
+                    const numB = parseInt(b.name.match(/slide(\d+)\.xml$/)[1]);
+                    return numA - numB;
+                });
+                
+                let extractedSlides = [];
+                
+                for (let slideFile of slideFiles.slice(0, 10)) { // Max 10 slides
+                    const content = await slideFile.async('text');
+                    
+                    // Parse XML sederhana untuk extract teks
+                    const textMatches = content.match(/<a:t>([^<]*)<\/a:t>/g) || [];
+                    const texts = textMatches.map(match => {
+                        return match.replace(/<a:t>/g, '').replace(/<\/a:t>/g, '');
+                    }).filter(t => t.trim());
+                    
+                    if (texts.length > 0) {
+                        extractedSlides.push({
+                            title: texts[0] || 'Slide',
+                            content: texts.slice(1).join('\n• ') || ''
+                        });
+                    }
+                }
+                
+                // Convert ke format yang bisa digunakan generateSlidesFromContent
+                if (extractedSlides.length > 0) {
+                    // Buat struktur slide dari PPT yang diupload
+                    slides = extractedSlides.map((slide, idx) => ({
+                        id: idx + 1,
+                        layout: idx === 0 ? 'title' : 'content',
+                        theme: 'gradient',
+                        accent: 'indigo',
+                        animation: 'fade',
+                        title: slide.title,
+                        subtitle: idx === 0 ? 'Imported from PPTX' : '',
+                        content: slide.content,
+                        shapes: [],
+                        notes: ''
+                    }));
+                    
+                    toggleImportModal();
+                    renderThumbnails();
+                    loadSlide(0);
+                    
+                    alert(`Berhasil import ${slides.length} slide dari PowerPoint!`);
+                    return;
+                } else {
+                    throw new Error('Tidak dapat mengekstrak konten dari PPTX');
+                }
+                
+            } catch (error) {
+                console.error('Error parsing PPTX:', error);
+                alert('Error parsing PPTX: ' + error.message + '\nMencoba extract sebagai text...');
+                // Fallback: baca sebagai text biasa
+                const text = await file.text();
+                parsedDocumentContent = text.substring(0, 5000);
+                showParsedContent();
+            }
+        }
+
         // URL Scraping
         async function scrapeURL() {
             const url = document.getElementById('urlInput').value;
@@ -1009,27 +1096,22 @@
             progress.classList.remove('hidden');
             
             try {
-                // Menggunakan allorigins.win sebagai CORS proxy
                 const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
                 const response = await fetch(proxyUrl);
                 const data = await response.json();
                 
                 if (data.contents) {
-                    // Parse HTML
                     const parser = new DOMParser();
                     const doc = parser.parseFromString(data.contents, 'text/html');
                     
-                    // Hapus script dan style
                     doc.querySelectorAll('script, style, nav, footer, header').forEach(el => el.remove());
                     
-                    // Ambil konten utama
                     const article = doc.querySelector('article') || doc.querySelector('main') || doc.querySelector('.content') || doc.body;
                     
-                    // Convert ke markdown menggunakan Turndown
-                    const turndownService = new TurndownService();
-                    const markdown = turndownService.turndown(article.innerHTML);
+                    // Extract text content
+                    const textContent = article.innerText || article.textContent;
+                    parsedDocumentContent = textContent;
                     
-                    parsedDocumentContent = markdown;
                     showParsedContent();
                 }
             } catch (error) {
@@ -1040,7 +1122,6 @@
             }
         }
 
-        // Alternative Fetch (untuk site yang tidak support CORS)
         async function fetchAndParse() {
             const url = document.getElementById('urlInput').value;
             if (!url) return;
@@ -1059,22 +1140,18 @@
         function generateSlidesFromContent() {
             if (!parsedDocumentContent) return;
             
-            // Split konten menjadi beberapa slide berdasarkan paragraf
             const paragraphs = parsedDocumentContent.split(/\n\n+/).filter(p => p.trim().length > 0);
             const chunks = [];
             
-            // Gabungkan paragraf menjadi 5 bagian
             const chunkSize = Math.ceil(paragraphs.length / 5);
             for (let i = 0; i < 5; i++) {
                 const chunk = paragraphs.slice(i * chunkSize, (i + 1) * chunkSize).join('\n\n');
                 if (chunk) chunks.push(chunk);
             }
             
-            // Generate slides
             const titles = ['Judul Utama', 'Pendahuluan', 'Poin Utama', 'Analisis', 'Kesimpulan'];
             
             slides = chunks.map((content, idx) => {
-                // Bersihkan konten
                 const cleanContent = content.substring(0, 500).replace(/[#*_]/g, '');
                 
                 return {
@@ -1095,8 +1172,177 @@
             renderThumbnails();
             loadSlide(0);
             
-            // Notifikasi
             gsap.fromTo("#currentSlide", {scale: 0.9, opacity: 0}, {scale: 1, opacity: 1, duration: 0.6});
+        }
+
+        // Export PPT menggunakan PptxGenJS
+        function exportPPT() {
+            try {
+                // Buat instance PptxGenJS
+                let pptx = new PptxGenJS();
+                
+                // Set metadata
+                pptx.author = 'AI Presentation Generator';
+                pptx.company = 'AI Generator Pro';
+                pptx.subject = 'Generated Presentation';
+                pptx.title = slides[0].title;
+                
+                // Set layout (16:9)
+                pptx.layout = 'LAYOUT_16x9';
+                
+                // Color mappings untuk PPT
+                const colorMap = {
+                    'indigo': '6366F1',
+                    'pink': 'EC4899',
+                    'violet': '8B5CF6',
+                    'emerald': '10B981',
+                    'amber': 'F59E0B'
+                };
+                
+                const accentColor = colorMap[currentAccent] || '6366F1';
+                
+                // Generate slides
+                slides.forEach((slide, idx) => {
+                    let pptSlide = pptx.addSlide();
+                    
+                    // Set background berdasarkan tema
+                    if (slide.theme === 'gradient' || slide.theme === 'dark' || slide.theme === 'corporate' || slide.theme === 'minimal') {
+                        pptSlide.background = { color: '1e293b' };
+                    } else if (slide.theme === 'light') {
+                        pptSlide.background = { color: 'f8fafc' };
+                    } else if (slide.theme === 'nature') {
+                        pptSlide.background = { color: '11998e' };
+                    }
+                    
+                    // Layout specific rendering
+                    if (slide.layout === 'title') {
+                        // Title Slide
+                        pptSlide.addText(slide.title, {
+                            x: 0.5, y: 1.5, w: '90%', h: 1.5,
+                            fontSize: 44, bold: true, color: slide.theme === 'light' ? '1e293b' : 'FFFFFF',
+                            align: 'center', fontFace: 'Arial'
+                        });
+                        
+                        pptSlide.addText(slide.subtitle, {
+                            x: 0.5, y: 3.2, w: '90%', h: 0.8,
+                            fontSize: 24, color: slide.theme === 'light' ? '475569' : 'E2E8F0',
+                            align: 'center', fontFace: 'Arial'
+                        });
+                        
+                        pptSlide.addText(slide.content, {
+                            x: 1, y: 4.2, w: '80%', h: 1,
+                            fontSize: 18, color: slide.theme === 'light' ? '64748B' : '94A3B8',
+                            align: 'center', fontFace: 'Arial'
+                        });
+                        
+                    } else if (slide.layout === 'content') {
+                        // Content Slide
+                        pptSlide.addText(slide.title, {
+                            x: 0.5, y: 0.5, w: '90%', h: 1,
+                            fontSize: 36, bold: true, color: slide.theme === 'light' ? '1e293b' : 'FFFFFF',
+                            fontFace: 'Arial'
+                        });
+                        
+                        // Parse bullet points
+                        const lines = slide.content.split('\n').filter(line => line.trim());
+                        const bullets = lines.map(line => ({
+                            text: line.replace(/^[•\-]\s*/, ''),
+                            options: { fontSize: 20, color: slide.theme === 'light' ? '334155' : 'CBD5E1' }
+                        }));
+                        
+                        pptSlide.addText(bullets, {
+                            x: 0.5, y: 1.8, w: '90%', h: 4,
+                            bullet: true, lineSpacing: 35,
+                            fontFace: 'Arial'
+                        });
+                        
+                    } else if (slide.layout === 'split') {
+                        // Split Layout
+                        pptSlide.addText(slide.title, {
+                            x: 0.5, y: 0.5, w: '45%', h: 1,
+                            fontSize: 32, bold: true, color: slide.theme === 'light' ? '1e293b' : 'FFFFFF',
+                            fontFace: 'Arial'
+                        });
+                        
+                        pptSlide.addText(slide.subtitle, {
+                            x: 0.5, y: 1.8, w: '45%', h: 0.6,
+                            fontSize: 20, color: slide.theme === 'light' ? '475569' : '94A3B8',
+                            fontFace: 'Arial'
+                        });
+                        
+                        pptSlide.addText(slide.content, {
+                            x: 5, y: 0.5, w: '45%', h: 5,
+                            fontSize: 20, color: slide.theme === 'light' ? '334155' : 'CBD5E1',
+                            fontFace: 'Arial'
+                        });
+                        
+                        // Garis pemisah
+                        pptSlide.addShape(pptx.ShapeType.line, {
+                            x: 4.8, y: 0.5, w: 0, h: 5,
+                            line: { color: accentColor, width: 2 }
+                        });
+                        
+                    } else if (slide.layout === 'image') {
+                        // Image Layout (2/3 text, 1/3 placeholder)
+                        pptSlide.addText(slide.title, {
+                            x: 0.5, y: 1, w: '60%', h: 1,
+                            fontSize: 40, bold: true, color: slide.theme === 'light' ? '1e293b' : 'FFFFFF',
+                            fontFace: 'Arial'
+                        });
+                        
+                        pptSlide.addText(slide.content, {
+                            x: 0.5, y: 2.2, w: '55%', h: 3,
+                            fontSize: 22, color: slide.theme === 'light' ? '334155' : 'CBD5E1',
+                            fontFace: 'Arial'
+                        });
+                        
+                        // Placeholder image area
+                        pptSlide.addShape(pptx.ShapeType.rect, {
+                            x: 6.5, y: 1, w: 3, h: 4,
+                            fill: { color: '000000', transparency: 50 }
+                        });
+                        
+                        pptSlide.addText('Image Placeholder', {
+                            x: 6.5, y: 2.5, w: 3, h: 1,
+                            align: 'center', color: 'FFFFFF', fontSize: 16
+                        });
+                    }
+                    
+                    // Tambahkan shapes jika ada
+                    slide.shapes.forEach(shape => {
+                        if (shape.type === 'circle') {
+                            pptSlide.addShape(pptx.ShapeType.ellipse, {
+                                x: shape.x / 100, y: shape.y / 100, w: shape.size / 100, h: shape.size / 100,
+                                fill: { color: accentColor }
+                            });
+                        } else if (shape.type === 'square') {
+                            pptSlide.addShape(pptx.ShapeType.rect, {
+                                x: shape.x / 100, y: shape.y / 100, w: shape.size / 100, h: shape.size / 100,
+                                fill: { color: accentColor }
+                            });
+                        }
+                    });
+                    
+                    // Tambahkan notes jika ada
+                    if (slide.notes) {
+                        pptSlide.addNotes(slide.notes);
+                    }
+                });
+                
+                // Save file
+                pptx.writeFile({ fileName: 'AI_Presentation.pptx' })
+                    .then(() => {
+                        console.log('PPT exported successfully');
+                    })
+                    .catch(err => {
+                        console.error('Error exporting PPT:', err);
+                        alert('Error saat export PPT: ' + err.message);
+                    });
+                
+            } catch (error) {
+                console.error('Error in exportPPT:', error);
+                alert('Error generating PPT: ' + error.message);
+            }
         }
 
         // Presentation Mode
@@ -1105,12 +1351,10 @@
             const slideContainer = document.getElementById('presentationSlide');
             
             if (mode.classList.contains('hidden')) {
-                // Masuk mode presentasi
                 mode.classList.remove('hidden');
                 updatePresentationSlide();
                 document.body.style.overflow = 'hidden';
             } else {
-                // Keluar mode presentasi
                 mode.classList.add('hidden');
                 document.body.style.overflow = '';
             }
@@ -1124,7 +1368,6 @@
             const slideEl = document.createElement('div');
             slideEl.className = `w-full h-full ${getThemeClass(slide.theme)} relative overflow-hidden`;
             
-            // Clone konten dari current slide
             let content = '';
             switch(slide.layout) {
                 case 'title':
@@ -1177,7 +1420,6 @@
             
             document.getElementById('presentationCounter').textContent = `${currentSlideIndex + 1} / ${slides.length}`;
             
-            // Animasi masuk
             gsap.fromTo(slideEl.children, 
                 { opacity: 0, y: 30 },
                 { opacity: 1, y: 0, duration: 0.5, stagger: 0.1 }
@@ -1323,7 +1565,6 @@
 </body>
 </html>`;
 
-            // Download file
             const blob = new Blob([htmlContent], {type: 'text/html'});
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
